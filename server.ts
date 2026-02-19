@@ -1,11 +1,12 @@
 import app from "./src/app.ts";
 import { config } from "./src/config/config.ts";
+import connectDB from "./src/config/db.ts";
 
 
 
 const startServer = async () => {
-
-
+// connect  DB
+   await connectDB()
     const port =config.port
 
     app.listen(port, () => {
