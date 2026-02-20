@@ -49,11 +49,40 @@ const createUser = async (req: Request, res: Response, next: NextFunction) => {
      });
 
      // 3. response
-     res.json({ accessToken: token });
+     res.status(201).json({ accessToken: token });
    } catch (error) {
     return next(createHttpError(500, "Error while creating jwt token"));
    }
 }
 
+const getUser = async (req: Request, res: Response, next: NextFunction) => {
+    const { email, password } = req.body;
 
-export {createUser }
+    if (!email || !password) {
+        const error = createHttpError(400, "All field are required");
+        return next(error);
+    }
+    const user = await Users.findOne({ email });
+    if (!user) {
+        const error = createHttpError(400, "Invalid credentials");
+        return next(error);
+    }
+    // bcrypt.compare(plainPassword, hashedPassword) order is very important
+    const isMatch = await bcrypt.compare(password, user.password as string);
+
+    if (!isMatch) {
+        const error = createHttpError(400, "Invalid credentials");
+        return next(error);
+    }
+    const token = jwt.sign({ sub: user._id }, config.jwtSecret as string, {
+        expiresIn: "7d",
+    });
+
+    // 3. response
+
+    res.status(201).json({
+        message: `welcome ${user.name}`,
+        accessToken: token,
+    });
+}
+export {createUser,getUser }
